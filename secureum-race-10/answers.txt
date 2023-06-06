@@ -1,0 +1,147 @@
+Question 1
+
+“Which statements are true in Test1()?” 
+
+ A. The function does not use all supplied extra data
+ B. The function can revert due to an underflow
+ C. The function can revert due to an overflow
+ D. The function accesses memory which it should not
+
+My answers: A, B, C
+Correct: A, B, C
+
+Answer A seems a bit confusing when looking at Test1() alone, but seeing the xtr variable of Test2() brings some clarity: The Test1() function signature expects one uint to be passed, but then within the function body it loads 64 bytes directly from calldata. Test2() then shows how the function is intended to be called by concatenating extra data to the ABI encoded calldata. It adds two more uint types which together are 64 bytes of extra data. But then in the abi.decode only the first uint from extra data is actually decoded and used.
+
+Both B and C are true since a Solidity version (^0.8.0) is used, that automatically checks for integer over/underflows and reverts when these happen. In this specific case, an overflow could happen when parameter n or the number supplied from extra data are large enough to wrap. The underflow can happen when the overall supplied calldata is smaller than 64 bytes, making the subtraction within the slicing parameters fail.
+
+You could argue that accessing msg.data directly should be avoided when possible. But this doesn't access memory but read-only calldata. Therefore no memory is accessed that should not be.
+
+----------
+
+Question 2
+
+“Which statements are true in Test2()?”
+
+ A. Result of encodePacked is deterministic
+ B. abi.decode always succeeds
+ C. It calls function Test1() without any problem
+ D. It should use uint256 instead of uint
+
+My answers: A, C
+Correct: A, C
+
+Deterministic means that you should always get the same predictable output for a given input. As such, encodePacked always encodes passed data the same way.
+
+Test2's abi.decode will only succeed if no error happens in Test1(). If Test1() reverts the returned data would not contain a decodable uint but error data. One way to cause this to happen would be supplying a number n that causes an overflow. The best practice is to check the success boolean before attempting to decode the returned data.
+
+Answer D leaves some room for interpretation. uint is an alias of uint256 and there should not be an issue using it here. But it's a common best practice to avoid the shorter alias and instead use the longer-named version of the type. While this is generally considered to improve readability, I'd argue that consistency (always using the same type) is more important.
+
+----------
+
+Question 3
+
+“Which statements are true in NextBookNonce()?”
+
+ A. wrap and unwrap cost additional gas
+ B. It is safe to use unchecked
+ C. There is something suspicious about the increment value
+ D. It could have used x.nonce++
+
+My answers: A, C, D
+Correct: B, C
+
+The calls to wrap and unwrap are basically telling Solidity whether it should treat a certain variable as being of a custom type (Nonce) or of its native type (uint256). This switch is basically just syntactic sugar for handling types within Solidity, the EVM will know nothing of these type switches and no additional gas will be used by doing so.
+
+Using an unchecked block in this function would omit Solidity's over/underflow handling. Especially in the context of a Nonce (Number used only once), you don't want integer values to wrap and overflow to values that were once used before. But usually, a nonce is only increased by such a small value that exploiting this would be very expensive. In this specific case, the function is pure and the nonce is not stored, so whether it's safe to use unchecked block will depend on the function being used correctly.
+
+Answer C sounds rather ominous but it's simply pointing out that Nonces are commonly increased by one and not by such a weird number as 3.
+
+Arithmetic operations cannot be executed on custom types without unwrapping the number first.
+
+----------
+
+Question 4
+
+“Which statements are true in Test3()?”
+
+ A. bookIndex.nonce is incremented in the loop
+ B. bookIndex.nonce cannot be incremented because NextBookNonce is pure
+ C. i++ can be made unchecked
+ D. memory can be changed to storage without any other changes
+
+My answers: B, C 
+Correct: A, C
+
+Both A and B should be clear from reading the code.
+
+The increment of i within the loop can indeed be made unchecked since it won't be able to overflow no matter what is supplied as n.
+
+The memory location can't simply be changed to storage without various further changes such as assigning it to a specific storage slot before being able to make use of it.
+
+----------
+
+Question 5
+
+“Which statements are true In Test4()?”
+
+ A. The function always reverts with ZeroAddress()
+ B. The function always reverts with ZeroAmount()
+ C. The function never reverts with ZeroAddress()
+ D. The function never reverts with ZeroAmount()
+
+My answers: A
+Correct: C, D
+
+The first array elements of both a and amounts will always be zero-like. Both 1 for ZeroAddress and 2 for ZeroAmount will be OR-combined resulting in 3. Once this value is set as an error, further iterations will not influence it. After the loop has finished, this error value is not checked for and instead, the function returns the total without reverting.
+
+----------
+
+Question 6
+
+“Which statements are true in Test5()?”
+
+ A. modifier checkInvariants will pause the contract if too much is minted
+ B. modifier checkInvariants will never pause the contract
+ C. modifier checkInvariants will always pause the contract
+ D. There are more efficient ways to handle the require
+
+ 
+
+My answers: A, D
+Correct: B, D
+
+While the checkInvariants modifier does intend to pause the contract if too much is minted, it'll be unable to ever do so since this will be reverted by the second require call.
+
+----------
+
+Question 7
+
+“Which statements are true about the owner?”
+
+ A. The owner is initialized
+ B. The owner is not initialized
+ C. The owner cannot be changed
+ D. The owner can be changed
+
+My answers: A, D
+Correct: A, D
+
+Although not visible here, the owner is indeed initialized by the constructor inherited from Ownable, which also comes with functions allowing to change the owner at a later point.
+
+----------
+
+Question 8
+
+“Which statements are true in Test5() and related functions?”
+
+ A. pause is unsafe
+ B. unpause is unsafe
+ C. The emit is done right
+ D. The emit is done wrong
+
+My answers: C
+Correct: A, D
+
+The pause function is missing the onlyOwner modifier allowing anyone to arbitrarily pause the contract.
+
+The minted event's parameters appear to be in the wrong order.
