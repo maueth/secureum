@@ -1,0 +1,132 @@
+Question 1
+
+“The security concern(s) addressed explicitly in _mint include”
+
+ A. Prevent minting to zero address
+ B. Prevent reminting of NFTs
+ C. Transparency by emitting event
+ D. None of the above
+
+My answers: A, B, C 
+Correct: A, B, C
+
+The _mint() function addresses both A and B with the first two requires. 
+Also C is correct since the emission of the Transfer event allows for easy tracking of mints and therefore transparency.
+
+----------
+
+Question 2
+
+“The security concerns in _burn include”
+
+ A. Anyone can arbitrarily burn NFTs
+ B. Potential integer underflow because of unchecked
+ C. Incorrect emission 
+ D. None of the above
+
+My answers: A, B
+Correct: A
+
+It appears that the _burn() function was intended to be internal (based on the underscore prefix) but is actually external which allows for A.
+
+Answer B is not a concern thanks to the ownership check ensuring that it cannot happen.
+
+The emission of the event follows the event declaration and therefore C is not a concern either.
+
+----------
+
+Question 3
+
+“The security concern(s) addressed explicitly in _safeMint include”
+
+ A. Validating if the recipient is an EOA
+ B. Ensuring that the recipient can only be an EOA
+ C. Validating if the recipient is an ERC721 aware contract
+ D. None of the above
+
+My answers: D
+Correct: A, C
+
+----------
+
+Question 4
+
+“Function approve”
+
+ A. Allows the NFT owner to approve a spender
+ B. Allows the NFT spender to approve an operator
+ C. Allows the NFT operator to approve a spender
+ D. None of the above
+
+My answers: A, C
+Correct: A, C
+
+The require shows that only (A) the NFT owner and (C) the operator that the owner gave access to manage all their NFTs have the ability to approve spenders. A spender cannot approve other spenders and especially not operators.
+
+----------
+
+Question 5
+
+“Function setApprovalForAll”
+
+ A. Approves msg.sender to manage operator’s NFTs
+ B. Gives everyone approval to manage msg.sender’s NFTs
+ C. Revokes everyone’s approvals to manage msg.sender’s NFTs
+ D. None of the above
+
+My answers: A
+Correct: D
+
+----------
+
+Question 6
+
+“The security concern(s) in transferFrom include”
+
+ A. Allowing the msg.sender to transfer any NFT
+ B. NFTs potentially stuck in recipient contracts
+ C. Potential integer underflow
+ D. None of the above
+
+My answers: C
+Correct: A, B, C
+
+The transferFrom() function does not check ownership of the NFT. This allows any msg.sender to overwrite the current owner, basically allowing a transfer of any NFT.
+
+The safeTransferFrom() function ensures that NFTs will not be stuck in recipient contracts that don't communicate that they are able to handle them. This issue still exists for the normal transferFrom() function though for backwards compatability reasons.
+
+Due to the missing ownership check, it's possible for the balance of the sender to underflow.
+
+----------
+
+Question 7
+
+“Which of the following is/are true?”
+
+ A. NFT ownership is tracked by _ownerOf
+ B. NFT balance is tracked by _balanceOf
+ C. NFT approvals are tracked by getApproved
+ D. NFT operator can transfer all of owner’s NFTs
+
+My answers: A, B, C, D
+Correct: A, B, C, D
+
+The variables _ownerOf, _balanceOf and getApproved indeed keep track of the mentioned values.
+
+And NFT operators are by definition able to transfer all NFTs of the owners that elected them to be their operators.
+
+-------
+
+Question 8
+
+“ERC721 recognizes the following role(s)”
+
+ A. Owner
+ B. Spender (Approved address)
+ C. Operator
+ D. None of the above
+
+My answers: A
+Correct: A, B, C
+
+This is quite apparent from ERC721 implementation parameter names. They can also be found in the EIP721 spec.
