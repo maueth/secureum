@@ -1,0 +1,141 @@
+Question 1
+InSecureum implements...
+1.Atypical decimal values
+2.Non-standard decreaseAllowance and increaseAllowance
+3.Non-standard transfer
+4.None of the above
+
+My answers: 1, 3
+Correct: 1, 2
+
+The decimals value follows the standard but it typically returns 18 (8 is atypical), imitating the relationship between Ether and Wei. 
+The decreaseAllowance and increaseAllowance functions were introduced in the OpenZeppelin ERC20 implementation to mitigate frontrunning
+issues of the standard approve, but they are not part of the ERC20 standard. The transfer function is part of the standard though.
+
+----------
+
+Question 2
+In InSecureum...
+1.decimals() can have pure state mutability instead of view
+2._burn() can have external visibility instead of internal
+3._mint() should have internal visibility instead of external
+4.None of the above
+
+My answers: 1, 3
+Correct: 1, 3
+
+Since decimals() returns a constant hardcoded value without accessing storage other non-calldata information it can indeed be declared as pure. 
+Generally, functions prefixed with underscores should be internal or should not have the prefix. Making _burn() external would currently allow
+anyone to burn anyone else's balance. And the fact that _mint() is currently external allows anyone to mint as many InSecureum tokens as they wish.
+
+----------
+
+Question 3
+In InSecureum transferFrom()...
+1.Is susceptible to an integer underflow
+2.Has an incorrect allowance check
+3.Has an optimisation indicative of unlimited approvals
+4.None of the above
+
+My answers: 3
+Correct: 1, 2, 3
+
+Integer Underflow: The function is susceptible to an integer underflow attack, which could allow an attacker to steal anyone else's full token 
+balance by setting the allowance to 0, causing an underflow, and wrapping the value to the maximum value of uint256. Therefore, option 1 is correct.
+
+Incorrect Allowance Check: The fact that the function won't revert when subtracting from the allowance due to the unchecked block can be seen 
+as an incorrect allowance check. This is because it allows an attacker to transfer more tokens than their allowance. Therefore, option 2 is correct.
+
+Optimisation for Unlimited Approvals: The function skips allowance subtraction when an "infinite approval" was given by setting the allowance 
+to the maximum value of uint256. Although this optimisation can prevent unnecessary storage updates, it also allows an attacker to transfer 
+unlimited tokens, even if their actual allowance is less than the balance. Therefore, option 3 is also correct.
+
+----------
+
+Question 4
+In InSecureum...
+1.increaseAllowance is susceptible to an integer overflow
+2.decreaseAllowance is susceptible to an integer overflow
+3.decreaseAllowance does not allow reducing allowance to zero
+4.decreaseAllowance can be optimised with unchecked{}
+
+My answers: 1, 3, 4
+Correct: 3, 4
+
+Option A and B are incorrect because both increaseAllowance and decreaseAllowance functions do not make use of the unchecked block which would allow 
+integer overflows to happen in this version of solidity.
+
+Option C is correct because decreaseAllowance function has a requirement that enforces that the subtractedValue must always be smaller than the 
+currentAllowance. This means that it is not possible to reduce the allowance to zero using this function.
+
+Option D is also correct because the requirement in decreaseAllowance function makes solidity's own integer underflow check for c
+urrentAllowance - subtractedValue redundant, so it could indeed be optimized with unchecked{}.
+
+----------
+
+Question 5
+InSecureum _transfer()...
+1.Is missing a zero-address validation
+2.Is susceptible to an integer overflow
+3.Is susceptible to an integer underflow
+4.None of the above
+
+My answers: 2
+Correct: 4
+
+The function _transfer() checks that both the sender and recipient addresses are not zero addresses, which means that option A is not correct. 
+Additionally, the function uses the unchecked keyword when subtracting the amount from the sender's balance, which means that there is no 
+possibility for an integer overflow or underflow in this version of Solidity, ruling out options B and C. Therefore, the correct answer is D.
+
+----------
+
+Question 6
+InSecureum _mint()...
+1.Is missing a zero-address validation
+2.Has an incorrect event emission
+3.Has an incorrect update of account balance
+4.None of the above
+
+My answers: 1, 4
+Correct: 1, 3
+
+Correct is A, C. The _mint function is currently not ensuring that the receiving address is non-zero. The event emission appears to be correctly
+following IERC20: event Transfer(address indexed from, address indexed to, uint256 value);. This mint implementation overwrites the accounts 
+current balance instead of adding to it.
+
+----------
+
+Question 7
+In InSecureum _burn()...
+1.Is missing a zero-address validation
+2.Has an incorrect event emission
+3.Has an incorrect update of account balance
+4.None of the above
+
+Correct: 2
+
+In the _burn() function, a zero-address validation is correctly applied on the account to burn from. The balance update is also correct, 
+and although an unchecked block is used, no underflow can happen thanks to the requirement before. However, the event emission is incorrect, 
+as the order of the from and to addresses needs to be switched to follow the IERC20 interface: event Transfer(address indexed from, 
+address indexed to, uint256 value);.
+
+----------
+
+Question 8
+InSecureum _approve()...
+1.Is missing a zero-address validation
+2.Has incorrect error messages
+3.Has an incorrect update of allowance
+4.None of the above
+
+Correct: 2, 3
+
+The first issue is that the error messages are incorrect. Specifically, the error messages should be switched around. The require statement 
+that checks if the spender address is not zero should have the error message "ERC20: approve to the zero address", and the require statement 
+that checks if the owner address is not zero should have the error message "ERC20: approve from the zero address".
+
+The second issue with the _approve function is that the update of allowances is currently incorrect. The function only adds the amount to 
+the current allowance, which can lead to unexpected behavior. The correct implementation should set the allowance to the amount, 
+overwriting the previous value.
+
+Therefore, the correct answers are B and C: the error messages are incorrect, and the update of allowance is incorrect.
